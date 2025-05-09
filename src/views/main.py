@@ -8,6 +8,7 @@ from calcs import manager_calcs
 
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
 
 class Main_Window():
     def __init__(self , width , height , x_pos , y_pos , title):
@@ -29,19 +30,24 @@ class Main_Window():
             self.Main_Window.destroy()
 
     def Build_Window(self):
-        self.Data_From_Widget_Entry = StringVar(self.Main_Window)
+        self.Path_Excel = StringVar(self.Main_Window)
         self.Decimals_Precision = IntVar(self.Main_Window)
 
-        Label_Field_For_Data = Label(self.Main_Window , text="Ingrese los datos:" , font=("Times New Roman" , 13))
-        Label_Field_For_Data.place(x=20 , y=20)
-        Input_Data = Entry(self.Main_Window , font=("Courier New" , 13) , textvariable=self.Data_From_Widget_Entry)
-        Input_Data.place(x=150 , y=20 , width=530)
+        Label_Input_Path_Excel = Label(self.Main_Window , text="Ingrese los datos:" , font=("Times New Roman" , 13))
+        Label_Input_Path_Excel.place(x=20 , y=20)
+        Input_Path_Excel = Entry(self.Main_Window , font=("Courier New" , 13) , textvariable=self.Path_Excel)
+        Input_Path_Excel.place(x=150 , y=20 , width=530)
 
         Label_Input_Decimals_Precision = Label(self.Main_Window , text="Precision:" , font=("Times New Roman" , 13))
         Label_Input_Decimals_Precision.place(x=20 , y=60)
         Input_Decimals_Precision = Spinbox(self.Main_Window , from_=0 , to=10 , increment=1 , width=3 , font=("Courier New" , 13) , textvariable=self.Decimals_Precision)
         Input_Decimals_Precision.config(state="readonly")
         Input_Decimals_Precision.place(x=150 , y=60)
+
+        Type_Variable = ["Discreta" , "Continua"]
+        Input_Type_Variable = ttk.Combobox(self.Main_Window , values=Type_Variable , state="readonly" , width=30)
+        Input_Type_Variable.set(Type_Variable[0])
+        Input_Type_Variable.place(x=350 , y=60)
 
         Btn_Calc_Frecuences = Button(self.Main_Window , text="Calcular Tabla de Frecuencias" , font=("Times New Roman" , 13))
         Btn_Calc_Frecuences.place(x=230 , y=100 , width=240)
@@ -52,7 +58,7 @@ class Main_Window():
         try:
             self.Validate_Data()
 
-            Results = manager_calcs.Principal_Function(self.Data_From_Widget_Entry.get() , self.Decimals_Precision.get())
+            Dictionary_Results = manager_calcs.Principal_Function(self.Data_From_Widget_Entry.get() , self.Decimals_Precision.get())
             
 
         except WarningException as e:
@@ -68,5 +74,5 @@ class Main_Window():
 
 
 if(__name__ == "__main__"):
-    Main = Main_Window(700 , 160 , 200 , 100 , "Calculo de Frecuencias")
+    Main = Main_Window(1200 , 620 , 200 , 100 , "Calculo de Frecuencias")
     Main.Build_Window()

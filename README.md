@@ -1,4 +1,5 @@
 # Programa de Calculo de Frecuencias
+
 Programa desarrollado usando el lenguaje de programacion Python, junto con las librerias numpy, pandas y matplotlib.
 
 Tiene como proposito servir de ayuda en el analisis de grandes volumenes de datos.
@@ -7,15 +8,17 @@ Tiene como proposito servir de ayuda en el analisis de grandes volumenes de dato
 ---
 
 ## Tabla de Contenido
-1. Descripcion
+1. [Descripcion](#descripcion)
 
-2. Demo
+2. [Estructura del Proyecto](#estructura-del-proyecto)
 
-3. Instalacion
+3. [Demo](#demo)
 
-4. Guia de uso
+4. [Instalacion](#instalacion)
 
-5. Contribuidores
+5. [Guia de uso](#guia-de-uso)
+
+6. [Contribuidores](#contribuidores)
 
 ---
 
@@ -25,11 +28,17 @@ El programa fue desarrollado como proyecto para el curso de *Estadistica 2025-I*
 
 ---
 
+## Estructura del Proyecto
+
+
+
+---
+
 ## Demo
 
 ---
 
-## Intalacion
+## Instalacion
 ### Programas requeridos
 1. Un editor de codigo como VSCode
 

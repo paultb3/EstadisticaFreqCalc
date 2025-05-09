@@ -17,6 +17,9 @@ def Check_Type_Of_Data(Data_List):
 
     if(Is_Cuantitative):
         Is_Cuantitative_Continue = any([True if "." in str(val) else False for val in Data_List])
+    
+    if(Is_Cuantitative_Continue):
+        m = 1 + (3.322)
 
     return Is_Cuantitative , Is_Cuantitative_Continue
 
@@ -55,6 +58,7 @@ def Get_Results_From_Cuantitative_Grouped_Data(Data_List , Precision):
 def Principal_Function(Data_Entered):
     Data_List = Convert_str_Input_To_List(Data_Entered)
     Is_Cuantitative , Is_Cuantitative_Continue = Check_Type_Of_Data(Data_List)
+    Dictionary_Results = {}
 
     match(Is_Cuantitative):
         case True:
