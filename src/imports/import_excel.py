@@ -1,46 +1,63 @@
+
+import tkinter as tk
+from tkinter import filedialog, messagebox
 import pandas as pd
-from tkinter import filedialog
-from collections import Counter
+import os
+from imports import cache
 
-def Import_Data_From_Excel(Excel_Path , Column_Name):
-    """ 
-        ===============================================
-        El codigo de abajo servira para seleccionar y
-        validar el numero de hoja del excel
-        ===============================================
-    """
-    """ 
-    sheet_number = 0
+def importar_excel_seguro(archivo):
+    try:
+        datos = pd.read_excel(archivo, engine='openpyxl', dtype=str)
+        datos.columns = datos.columns.str.strip()
+        datos = datos.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
-    Prev_Load_Excel = pd.ExcelFile(Excel_Path , engine="openpyxl")
+        if datos.empty:
+            messagebox.showerror("Error", "El archivo está vacío")
+            return None
 
-    Sheet_Names = Prev_Load_Excel.sheet_names
-    Sheet_Name = Sheet_Names[sheet_number]
-    print(Sheet_Name)
-    """
-    Excel = pd.read_excel(Excel_Path , engine="openpyxl")
+        columnas_vacias = datos.columns[datos.isnull().all()]
+        if not columnas_vacias.empty:
+            aviso = f"Advertencia: Las siguientes columnas están completamente vacías:\n{', '.join(columnas_vacias)}"
+            messagebox.showwarning("Advertencia", aviso)
 
-    Columns_In_Excel = Excel.columns.tolist()
-    print(Columns_In_Excel)
-    if(not Column_Name in Columns_In_Excel):
-        raise Exception("No existe la columna especificada")
+        info = f"Archivo cargado correctamente\nFilas: {datos.shape[0]} | Columnas: {datos.shape[1]}\n\n"
+        info += "Columnas: " + ", ".join(datos.columns[:5])
+        if datos.shape[1] > 5:
+            info += ", ..."
+        messagebox.showinfo("Resumen", info)
 
-    Imported_Data = Excel[Column_Name]
+        return datos
 
-    Imported_Data.dropna()
-    Imported_Data.values
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo cargar el archivo:\n{e}")
+        return None
+
+def cargar_excel(entry_widget):
+    archivo = filedialog.askopenfilename(filetypes=[("Archivos Excel", "*.xlsx *.xls")])
+    if archivo:
+        entry_widget.delete(0, tk.END)
+        entry_widget.insert(0, archivo)
+        datos = importar_excel_seguro(archivo)
+        if datos is not None:
+            cache.agregar_archivo_reciente(archivo)
+
+def mostrar_recientes(frame_padre, entry_widget):
     
-    Array_With_Data = [val for val in Imported_Data.tolist()]
-    Array_With_Data = Array_With_Data
+    for widget in frame_padre.winfo_children():
+        widget.destroy()
 
-    Arr = Counter(Array_With_Data)
-    Arr_xi = [xi for xi in Arr.keys()]
-    Arr_fi = [fi for fi in Arr.values()]
+    archivos = cache.obtener_archivos_recientes()
+    if archivos:
+        for archivo in archivos:
+            nombre = os.path.basename(archivo)
+            btn = tk.Button(frame_padre, text=nombre, width=25, anchor='w',
+                            command=lambda a=archivo: seleccionar_archivo(a, entry_widget))
+            btn.pack(fill='x', padx=2, pady=2)
+    else:
+        lbl = tk.Label(frame_padre, text="No hay archivos recientes", bg='white')
+        lbl.pack()
 
-    print(Arr_xi)
-    print(Arr_fi)
-
-if __name__ == "__main__":
-    Excel_Path = filedialog.askopenfilenames(title="Seleccione el archivo Excel" , filetypes=[("Archivos Excel" , "*.xlsx")])
-    print(Excel_Path[0])
-    Import_Data_From_Excel(Excel_Path[0] , "numero_hijos")
+def seleccionar_archivo(archivo, entry_widget):
+    entry_widget.delete(0, tk.END)
+    entry_widget.insert(0, archivo)
+    importar_excel_seguro(archivo)
