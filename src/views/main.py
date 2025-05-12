@@ -10,69 +10,91 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 
-class Main_Window():
-    def __init__(self , width , height , x_pos , y_pos , title):
-        self.Main_Window = Tk()
-        self.Main_Window.geometry(f"{width}x{height}+{x_pos}+{y_pos}")
-        self.Main_Window.title(title)
+import tkinter as tk
+from tkinter import filedialog
+import pandas as pd
+import os
+import ttkbootstrap as ttkb
+from ttkbootstrap.constants import *
+from tkinter import PhotoImage
+from PIL import Image, ImageTk
+from views.results import VentanaProcesamiento
 
-        Icon = PhotoImage(file=Get_Resource_Path("assets/icon.png"))
-        self.Main_Window.iconphoto(False , Icon)
+
+class mainWindow:
+    def __init__(self):
+        self.root = ttkb.Window(themename="flatly")
+        self.root.title("TabuladorPy")
+        self.root.iconbitmap("assets/icono.ico")
+        width, height = 700, 550
+
+        x = (self.root.winfo_screenwidth() - width) // 2
+        y = (self.root.winfo_screenheight() - height) // 2
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+        self.root.configure(bg="#F5ECD5")
+
+        self.estilos_personalizados()
+
+        self.crear_botones()
+        self.crear_entradas()
+        self.texto()
+
+    def estilos_personalizados(self):
+        style = ttkb.Style()
+
+        style.configure("Custom.TLabel", foreground="#222831", background="#F5ECD5", font=("Franklin Gothic Demi", 13))
+        style.configure("Custom.TButton", foreground="#F5ECD5", background="#626F47", font=("Franklin Gothic Demi", 13), borderwidth=0, focusthickness=3, focuscolor='none')
+        style.configure("Custom.TEntry", fieldbackground="#FFFFFF", foreground="#222831", font=("Aptos", 12))
+
+    def texto(self):
+        label_ingresarExcel = ttkb.Label(self.root, text="Cargue la tabla de excel:", style="Custom.TLabel")
+        label_ingresarExcel.place(x=110, y=30)
+
+        label_nombreColumna = ttkb.Label(self.root, text="Nombre de la columna:", style="Custom.TLabel")
+        label_nombreColumna.place(x=110, y=130)
+
+        entry_nombreColumna = ttkb.Entry(self.root, style="Custom.TEntry", width=58)
+        entry_nombreColumna.place(x=110, y=170)
         
-        self.Main_Window.resizable(False , False)
+        label_nombreFila = ttkb.Label(self.root, text="Nombre de la fila:", style="Custom.TLabel")
+        label_nombreFila.place(x=110, y=215)
 
-    def Close_Window(self):
-        if(self.Main_Window):
-            for widget in self.Main_Window.winfo_children():
-                widget.destroy()
+        entry_nombreFila = ttkb.Entry(self.root, style="Custom.TEntry", width=58)
+        entry_nombreFila.place(x=110, y=250)
+        
+        label_tipoVariable = ttkb.Label(self.root, text="Tipo de variable:", style="Custom.TLabel")
+        label_tipoVariable.place(x=110, y=295)
 
-            self.Main_Window.quit()
-            self.Main_Window.destroy()
+        label_presicion = ttkb.Label(self.root, text="Presición:", style="Custom.TLabel")
+        label_presicion.place(x=110, y=390)
 
-    def Build_Window(self):
-        self.Path_Excel = StringVar(self.Main_Window)
-        self.Decimals_Precision = IntVar(self.Main_Window)
+    def crear_botones(self):
+        iconoExcel_pil = Image.open("assets/icono-excel.png").resize((24, 24), Image.LANCZOS)
+        self.iconoExcel = ImageTk.PhotoImage(iconoExcel_pil)
+        
+        btncargarexcel = ttkb.Button(self.root, image=self.iconoExcel, compound=LEFT, text="Cargar Excel", style="Custom.TButton")
+        btncargarexcel.place(x=110, y=70)
 
-        Label_Input_Path_Excel = Label(self.Main_Window , text="Ingrese los datos:" , font=("Times New Roman" , 13))
-        Label_Input_Path_Excel.place(x=20 , y=20)
-        Input_Path_Excel = Entry(self.Main_Window , font=("Courier New" , 13) , textvariable=self.Path_Excel)
-        Input_Path_Excel.place(x=150 , y=20 , width=530)
+        btnprocesar = ttkb.Button(self.root, text="Procesar", style="Custom.TButton", command=self.abrir_ventana_procesamiento)
+        btnprocesar.place(x=300, y=470)
 
-        Label_Input_Decimals_Precision = Label(self.Main_Window , text="Precision:" , font=("Times New Roman" , 13))
-        Label_Input_Decimals_Precision.place(x=20 , y=60)
-        Input_Decimals_Precision = Spinbox(self.Main_Window , from_=0 , to=10 , increment=1 , width=3 , font=("Courier New" , 13) , textvariable=self.Decimals_Precision)
-        Input_Decimals_Precision.config(state="readonly")
-        Input_Decimals_Precision.place(x=150 , y=60)
+    def crear_entradas(self):
+        spinbox_numerico = ttkb.Spinbox(self.root, from_=0, to=100, font=("Aptos", 10), width=10)
+        spinbox_numerico.place(x=110, y=430)
 
-        Type_Variable = ["Discreta" , "Continua"]
-        Input_Type_Variable = ttk.Combobox(self.Main_Window , values=Type_Variable , state="readonly" , width=30)
-        Input_Type_Variable.set(Type_Variable[0])
-        Input_Type_Variable.place(x=350 , y=60)
+        opciones = ["Discreta", "Continua"]
+        seleccion = ttkb.Combobox(self.root, values=opciones, state="readonly", font=("Franklin Gothic Demi", 12), width=22)
+        seleccion.set("Seleccionar tipo de variable")
+        seleccion.place(x=110, y=330)
 
-        Btn_Calc_Frecuences = Button(self.Main_Window , text="Calcular Tabla de Frecuencias" , font=("Times New Roman" , 13))
-        Btn_Calc_Frecuences.place(x=230 , y=100 , width=240)
+    def run(self):
+        self.root.mainloop()
+        
+    def abrir_ventana_procesamiento(self):
+        self.root.destroy()  # Cierra la ventana actual
+        VentanaProcesamiento() 
 
-        self.Main_Window.mainloop()
-
-    def Process_Data(self):
-        try:
-            self.Validate_Data()
-
-            Dictionary_Results = manager_calcs.Principal_Function(self.Data_From_Widget_Entry.get() , self.Decimals_Precision.get())
-            
-
-        except WarningException as e:
-            messagebox.showwarning("Advertencia" , f"{e}")
-        except Exception as e:
-            messagebox.showerror("Error" , f"{e}")
-    def Validate_Data(self):
-            if(not self.Data_From_Widget_Entry.get()):
-                raise WarningException("No se han ingresado datos.")
-            
-            if(self.Decimals_Precision < 0):
-                raise WarningException("Valor no valido para la precision.")
-
-
-if(__name__ == "__main__"):
-    Main = Main_Window(1200 , 620 , 200 , 100 , "Calculo de Frecuencias")
-    Main.Build_Window()
+if __name__ == "__main__":
+    app = mainWindow()
+    app.run()
