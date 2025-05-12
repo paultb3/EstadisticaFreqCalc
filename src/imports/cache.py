@@ -34,8 +34,8 @@ def agregar_archivo_reciente(ruta_archivo):
 
     archivos.insert(0, ruta_archivo)  # Agrega al inicio
 
-    # Solo guardar los últimos 10
-    archivos = archivos[:10]
+    # Solo se guardan los últimos 3
+    archivos = archivos[:3]
     guardar_cache(archivos)
 
 def obtener_archivos_recientes():
