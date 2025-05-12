@@ -6,7 +6,7 @@ from path_manager import Get_Resource_Path
 from excception_handler import WarningException
 from calcs import manager_calcs
 
-from imports.import_excel import Load_Excel , mostrar_recientes
+from imports.import_excel import Load_Excel , mostrar_recientes , Change_Sheet_In_Loaded_Excel
 
 from tkinter import *
 from tkinter import messagebox
@@ -35,6 +35,7 @@ class Main_Window():
         self.Path_Excel = StringVar(self.Main_Window)
         self.Decimals_Precision = IntVar(self.Main_Window)
         self.Columns_Name = []
+        self.Sheet_Number = IntVar(self.Main_Window)
         
         Label_Input_Archivo = Label(self.Main_Window, text="Ingrese el archivo:", font=("Times New Roman", 13))
         Label_Input_Archivo.place(x=20, y=20)
@@ -57,13 +58,18 @@ class Main_Window():
 
         self.recientes_visibles = False
 
-        Label_Columns_Namme = Label(self.Main_Window , text="Seleccione el nombre de la columna: " , font=("Times New Roman", 13))
-        Label_Columns_Namme.place(x=20 , y=60)
+        Labels_Sheet_Number = Label(self.Main_Window , text="Seleccione la hoja: " , font=("Times New Roman", 13))
+        Labels_Sheet_Number.place(x=20 , y=60)
+        self.Input_Sheet_Number = Spinbox(self.Main_Window , textvariable=self.Sheet_Number , from_=1 , to=999 , increment=1 , width=4 , state="readonly" , font=("Courier New" , 13) , command= lambda: Change_Sheet_In_Loaded_Excel(self.Path_Excel.get() , self.Columns_Name , self.Input_Columns_Name , self.Sheet_Number))
+        self.Input_Sheet_Number.place(x=170 , y=60)
+
+        Label_Columns_Name = Label(self.Main_Window , text="Seleccione el nombre de la columna: " , font=("Times New Roman", 13))
+        Label_Columns_Name.place(x=300 , y=60)
         self.Input_Columns_Name = ttk.Combobox(self.Main_Window , values=self.Columns_Name , font=("Courier New" , 13))
         self.Input_Columns_Name.config(state="readonly")
-        self.Input_Columns_Name.place(x=280 , y=60 , width=400)
+        self.Input_Columns_Name.place(x=650 , y=60 , width=400)
 
-        Btn_Cargar_Excel = Button(self.Main_Window, text="Cargar Excel", bg='green', fg='white' , font=("Times New Roman" , 13) ,  command=lambda: Load_Excel(self.Path_Excel , self.Columns_Name , self.Input_Columns_Name))
+        Btn_Cargar_Excel = Button(self.Main_Window, text="Cargar Excel", bg='green', fg='white' , font=("Times New Roman" , 13) ,  command=lambda: Load_Excel(self.Path_Excel , self.Columns_Name , self.Input_Columns_Name , self.Sheet_Number))
         Btn_Cargar_Excel.place(x=850, y=15, width=160)
 
         Label_Input_Decimals_Precision = Label(self.Main_Window, text="Precision:", font=("Times New Roman", 13))
@@ -71,7 +77,7 @@ class Main_Window():
 
         Input_Decimals_Precision = Spinbox(self.Main_Window, from_=0, to=10, increment=1, width=3,font=("Courier New", 13), textvariable=self.Decimals_Precision)
         Input_Decimals_Precision.config(state="readonly")
-        Input_Decimals_Precision.place(x=150 , y=100)
+        Input_Decimals_Precision.place(x=170 , y=100)
 
         Type_Variable = ["Cuantitativa Discreta", "Cuantitativa Continua"]
 
@@ -92,7 +98,7 @@ class Main_Window():
             self.Recents_Frame.place_forget()
             self.recientes_visibles = False
         else:
-            mostrar_recientes(self.lista_recientes, self.Path_Excel , self.Columns_Name , self.Input_Columns_Name)
+            mostrar_recientes(self.lista_recientes, self.Path_Excel , self.Columns_Name , self.Input_Columns_Name , self.Sheet_Number)
             self.Recents_Frame.place(x=1020, y=65, width=160, height=100)
             self.recientes_visibles = True
 
