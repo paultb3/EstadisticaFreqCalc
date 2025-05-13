@@ -6,7 +6,6 @@ from path_manager import Get_Resource_Path
 from excception_handler import WarningException
 from tkinter import *
 from tkinter import messagebox
-from tkinter import ttk
 
 import tkinter as tk
 from tkinter import filedialog
@@ -92,6 +91,21 @@ class mainWindow:
     def abrir_ventana_procesamiento(self):
         self.root.destroy()  # Cierra la ventana actual
         VentanaProcesamiento() 
+
+    def Process_Data(self):
+        try:
+            self.Validate_Data()
+            Dictionary_Results = manager_calcs.Principal_Function(self.Data_From_Widget_Entry.get() , self.Decimals_Precision.get())
+        except WarningException as e:
+            messagebox.showwarning("Advertencia" , f"{e}")
+        except Exception as e:
+            messagebox.showerror("Error" , f"{e}")
+
+    def Validate_Data(self):
+        if(not self.Data_From_Widget_Entry.get()):
+            raise WarningException("No se han ingresado datos.")
+        if(self.Decimals_Precision < 0):
+            raise WarningException("Valor no valido para la precision.")
 
 if __name__ == "__main__":
     app = mainWindow()
