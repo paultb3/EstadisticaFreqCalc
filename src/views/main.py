@@ -4,8 +4,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from path_manager import Get_Resource_Path
 from excception_handler import WarningException
-from calcs import manager_calcs
-
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk

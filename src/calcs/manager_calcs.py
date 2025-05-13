@@ -1,70 +1,49 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..' , '..')))
+import pandas as pd
 
-from src.excception_handler import WarningException
-from calcs import cualitative_data as Freq_Cualitative_Data
-from calcs import cuantitative_grouped_data as Freq__Cuantitative_Grouped_Data
-from calcs import cuantitative_no_grouped_data as Freq_Cuantitative_No_Grouped_Data
+# Agrega al path las rutas de los módulos
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-def Check_Type_Of_Data(Data_List):
-    Is_Cuantitative = True
+# Importa tus módulos personalizados
+import cuantitative_grouped_data as grouped
+import cuantitative_no_grouped_data as no_grouped
+
+# =================== FUNCIONES DE GESTIÓN ===================
+
+def detectar_tipo_dato(data):
+    """
+    Detecta si los datos son cuantitativos continuos o discretos.
+    """
+    es_discreto = all(float(x).is_integer() for x in data)
+    return "Discreto" if es_discreto else "Continuo"
+
+def gestionar_datos(file_path, column_name):
     try:
-        for data in Data_List:
-            int(data)
-    except ValueError:
-        Is_Cuantitative = False
+        # Leer los datos desde Excel
+        df = pd.read_excel(file_path)
+        data = df[column_name].dropna().tolist()
 
-    if(Is_Cuantitative):
-        Is_Cuantitative_Continue = any([True if "." in str(val) else False for val in Data_List])
-    
-    if(Is_Cuantitative_Continue):
-        m = 1 + (3.322)
+        if not data:
+            print(f">>> La columna '{column_name}' está vacía o no existe en el archivo.")
+            return
 
-    return Is_Cuantitative , Is_Cuantitative_Continue
+        tipo_dato = detectar_tipo_dato(data)
+        cantidad_datos = len(data)
 
-def Convert_str_Input_To_List(Data_Entered):
-    Value = ""
-    Data = []
-    Spacers = [" " , "\n" , "," , ";" , "\t"]
-    for n in range(0,len(Data_Entered)):
-        char = Data_Entered[n]
-        if(char in Spacers or n==len(Data_Entered)-1):
-            """ Primero se comprueba que no haya un salto en blanco o un salto de linea o si la cadena esta a punto de terminar"""
-            if(n==len(Data_Entered)-1 and not char in Spacers):
-                """ Si la cadena esta por terminar, se añade el ultimo caracter para no quedar incompleta"""
-                Value+=char
+        print(f"\n>>> Tipo de dato detectado: {tipo_dato}")
+        print(f">>> Cantidad de datos: {cantidad_datos}")
 
-            if(Value==""):
-                """ Si el valor que estamos armando no tiene nada, pasa a la siguiente iteracion """
-                continue
-
-            else:
-                """ Si hay algo entonces se añade a todos los datos y se devuelve a su valor inicial """
-                Data.append(Value)
-                Value = ""
+        if cantidad_datos <= 50:
+            print("\n>>> Procesando datos NO AGRUPADOS...\n")
+            no_grouped.read_data_from_excel(file_path, column_name)
         else:
-            Value += char
+            print("\n>>> Procesando datos AGRUPADOS...\n")
+            grouped.read_data_from_excel(file_path, column_name)
 
-    return Data
-
-def Get_Results_From_Cuantitative_Grouped_Data(Data_List , Precision):
-    n = len(Data_List)
-
-
-
-
-
-def Principal_Function(Data_Entered):
-    Data_List = Convert_str_Input_To_List(Data_Entered)
-    Is_Cuantitative , Is_Cuantitative_Continue = Check_Type_Of_Data(Data_List)
-    Dictionary_Results = {}
-
-    match(Is_Cuantitative):
-        case True:
-            if(Is_Cuantitative_Continue):
-                pass
-            else:
-                pass
-        case False:
-            pass
+    except FileNotFoundError:
+        print(">>> Archivo no encontrado. Verifica la ruta.")
+    except KeyError:
+        print(f">>> La columna '{column_name}' no fue encontrada en el archivo.")
+    except Exception as e:
+        print(f">>> Error inesperado: {e}")
