@@ -20,8 +20,8 @@ def Extract_Columns_Name_From_Excel(Excel_Route , Columns_Name , Sheet_Number):
 
     Sheet_To_Read_Data = Sheet_Names[Sheet_Number.get() - 1]
 
-    Excel = pd.read_excel(Excel_Route, sheet_name=Sheet_To_Read_Data , engine='openpyxl', dtype=str , nrows=3) # Lee todas las columnas del Excel como str y revisa solo las primeras 10 filas
-
+    Excel = pd.read_excel(Excel_Route, sheet_name=Sheet_To_Read_Data , engine='openpyxl', dtype=str , nrows=3) # Lee todas las columnas del Excel como str y revisa solo las primeras 3 filas
+    print(Excel)
     Excel.columns = Excel.columns.str.strip() # Elimina espacios en los nombres " Name " => "Name"
     Excel = Excel.map(lambda x: x.strip() if isinstance(x, str) else x) # Elimina espacios en blanco dentro de los valores de cada columna
 
@@ -46,7 +46,7 @@ def Extract_Columns_Name_From_Excel(Excel_Route , Columns_Name , Sheet_Number):
 
 def Change_Sheet_In_Loaded_Excel(Path_Excel , Columns_Name , Input_Columns_Name , Sheet_Number):
     try:
-        Extract_Columns_Name_From_Excel(Path_Excel , Columns_Name , Sheet_Number)
+        Extract_Columns_Name_From_Excel(Path_Excel.get() , Columns_Name , Sheet_Number)
 
         Input_Columns_Name["values"] = Columns_Name
         Input_Columns_Name.set(Columns_Name[0])

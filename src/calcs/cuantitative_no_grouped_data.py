@@ -4,17 +4,6 @@ import statistics
 from collections import Counter
 
 # Leer los datos desde un archivo Excel
-def read_data_from_excel(file_path, column_name):
-    df = pd.read_excel(file_path)
-    data = df[column_name].dropna().tolist()
-    
-    # Verificar si todos los valores son enteros
-    es_discreto = all(float(x).is_integer() for x in data)
-
-    tipo_dato = "Discreto" if es_discreto else "Continuo"
-    print(f"\n>>> Tipo de datos detectado en '{column_name}': {tipo_dato}")
-
-    return data
 
 # Calcular las estadísticas básicas
 def calcular_estadisticas(data):
