@@ -3,6 +3,7 @@ import numpy as np
 import os
 import math
 
+from decimal import Decimal
 # =================== FUNCIONES ===================
 
 def find_min(data):
@@ -23,15 +24,60 @@ def calculate_m(n):
 def round_m(m, ):
     return round(m)
 
-def calculate_amplitude(rango, m_redondeado):
-    return math.ceil(rango / m_redondeado)
+def calculate_amplitude(rango, m_redondeado , max_n_decimals_in_data):
+    """
+        ==============================================================================================
+        Esta funcion se encarga de redondear la amplitud, recibe un valor y le añade una decima de mas 
+        para que el ultimo intervalo se pase un poco del valor maximo del dataset.
+        Ejemplos de uso:
+            Input: 1.3456 , N_Decimals = 2
+            Output: 1.346
 
-def calc_intervals(vmin, amplitud, m):
+            Input: 0.02 , N_Decimals = 2
+            Output: 0.021
+        ==============================================================================================
+    """
+    Number = rango/m_redondeado
+    N_Decimals = max_n_decimals_in_data
+    if(Number - round(Number) != 0):
+        """ print(f"{Number=}") """
+        Integer_Part = str(Number).split(".")[0]
+        Decimal_Part = str(Number).split(".")[1]
+
+        N_Decimals = N_Decimals if N_Decimals < len(Decimal_Part) else len(Decimal_Part)
+        if(N_Decimals > len(Decimal_Part) - 1):
+            Decimal_Part += "0"
+    
+        if(int(Decimal_Part[N_Decimals]) >= 5):
+            Decimal_Part = "".join([val for i , val in enumerate(Decimal_Part , start=1) if i <= N_Decimals])
+            Value_To_Add = float("0." + "0"*(N_Decimals - 1) + "1")
+        else:
+            Decimal_Part = "".join([val for i , val in enumerate(Decimal_Part , start=1) if i <= N_Decimals + 1])
+            Value_To_Add = "0." + "0"*N_Decimals + "1"
+            N_Decimals += 1
+
+        Number = float(Integer_Part + "." + Decimal_Part)
+        
+        """ print("Numero cortado: " , Number) """
+
+        Decimals_To_Round = "1." + "0"*(N_Decimals) if N_Decimals > 0 else "1"
+
+        Number = float(Decimal(str(Number)).quantize(Decimal(Decimals_To_Round)))
+        
+        Number += float(Value_To_Add)
+        """ print(f"{Number=}") """
+
+        return round(Number , N_Decimals) , N_Decimals
+    else:
+        return Number + 0.1
+
+def calc_intervals(vmin, amplitud, m , N_Decimals_C):
     intervals = []
     lower = vmin
     for _ in range(m):
         upper = lower + amplitud
-        intervals.append((lower, upper))
+        upper = round(upper , N_Decimals_C)
+        intervals.append([lower, upper])
         lower = upper
     return intervals
 
@@ -43,19 +89,19 @@ def calc_fi(data, intervals):
     return fi
 
 def calc_fi_cumulative(fi):
-    return np.cumsum(fi).tolist()
+    return np.cumsum(fi)
 
 def calc_hi(fi, n):
     return [f / n for f in fi]
 
 def calc_hi_cumulative(hi):
-    return np.cumsum(hi).tolist()
+    return np.cumsum(hi)
 
 def calc_pi_percent(hi):
     return [h * 100 for h in hi]
 
 def calc_pi_cumulative(pi):
-    return np.cumsum(pi).tolist()
+    return np.cumsum(pi)
 
 def calc_midpoints(intervals):
     return [(l + u) / 2 for l, u in intervals]
@@ -81,4 +127,5 @@ def calc_mode(intervals, fi, amplitud):
         return L
     return L + ((f1 - f0) / (2*f1 - f0 - f2)) * amplitud
 
-
+if(__name__ == "__main__"):
+    print(calculate_amplitude(1363 , 7 , 2))
