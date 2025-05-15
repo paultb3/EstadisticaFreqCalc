@@ -5,7 +5,8 @@ from collections import Counter
 
 # Leer los datos desde un archivo Excel
 
-# Calcular las estadísticas básicas
+# =================== FUNCIONES ===================
+
 def calcular_estadisticas(data):
     n = len(data)
     minimo = min(data)

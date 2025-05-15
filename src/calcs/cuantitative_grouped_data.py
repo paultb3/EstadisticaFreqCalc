@@ -5,10 +5,6 @@ import math
 
 # =================== FUNCIONES ===================
 
-def read_data_from_excel(file_path, column_name):
-    df = pd.read_excel(file_path)
-    return df[column_name].dropna().tolist()
-
 def find_min(data):
     return np.min(data)
 
@@ -84,6 +80,5 @@ def calc_mode(intervals, fi, amplitud):
     if (2*f1 - f0 - f2) == 0:
         return L
     return L + ((f1 - f0) / (2*f1 - f0 - f2)) * amplitud
-
 
 
