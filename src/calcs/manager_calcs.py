@@ -1,14 +1,14 @@
 import sys
 import os
 # Agrega al path la raíz del proyecto para que los imports funcionen correctamente
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pandas as pd
 import numpy as np
 
 # Importa tus módulos personalizados
-import cuantitative_grouped_data as grouped
-import cuantitative_no_grouped_data as no_grouped
+import calcs.cuantitative_grouped_data as grouped
+import calcs.cuantitative_no_grouped_data as no_grouped
 from tkinter import filedialog
 
 # =================== FUNCIONES DE GESTIÓN ===================
@@ -348,7 +348,7 @@ if(__name__ == "__main__"):
                 print(f"{i + 1}. {col_name}")
             
             column_index = int(input("Ingrese el numero de la columna a importar: "))
-            while(column_index < 0 or column_index > len(columns_list)):
+            while(column_index < 1 or column_index > len(columns_list)):
                 Clear_Terminal()
                 for i , col_name in enumerate(columns_list):
                     print(f"{i + 1}. {col_name}")
