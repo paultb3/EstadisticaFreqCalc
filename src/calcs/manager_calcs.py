@@ -24,31 +24,33 @@ def Find_Max_Decimal_Number_In_Dataset(Data):
 def Get_Results_For_Grouped_Data(data):
     # Calcular valores básicos
     n = len(data)
-    vmin = grouped.find_min(data)
-    vmax = grouped.find_max(data)
-    rango = grouped.find_range(data)
-    m = grouped.calculate_m(n)
-    m_redondeado = grouped.round_m(m)
+    vmin = grouped.Find_Min(data)
+    vmax = grouped.Find_Max(data)
+    rango = grouped.Calc_Range(data)
+    m = grouped.Calc_Intervals_Number(n)
+    m_redondeado = grouped.Calc_Rounded_Intervals_Number(m)
 
     max_n_decimals_in_data = Find_Max_Decimal_Number_In_Dataset(data)
 
-    amplitud , N_Decimals_C = grouped.calculate_amplitude(rango, m_redondeado , max_n_decimals_in_data)
+    amplitud = rango / m_redondeado
+    amplitud_redondeada , N_Decimals_C = grouped.Calc_Amplitude(rango, m_redondeado , max_n_decimals_in_data)
 
-    intervals = grouped.calc_intervals(vmin, amplitud, m_redondeado , N_Decimals_C)
+    intervals = grouped.Calc_Intervals(vmin, amplitud, m_redondeado , N_Decimals_C)
 
-    fi = grouped.calc_fi(data, intervals)
-    fi_cum = grouped.calc_fi_cumulative(fi)
+    midpoints = grouped.Calc_xi(intervals)
 
-    hi = grouped.calc_hi(fi, n)
-    hi_cum = grouped.calc_hi_cumulative(hi)
+    fi = grouped.Calc_fi(data, intervals)
+    fi_cum = grouped.Calc_Fi(fi)
 
-    pi = grouped.calc_pi_percent(hi)
-    pi_cum = grouped.calc_pi_cumulative(pi)
+    hi = grouped.Calc_hi(fi, n)
+    hi_cum = grouped.Calc_Hi(hi)
 
-    midpoints = grouped.calc_midpoints(intervals)
-    mean = grouped.calc_mean(midpoints, fi, n)
-    median = grouped.calc_median(intervals, fi, n, amplitud)
-    mode = grouped.calc_mode(intervals, fi, amplitud)
+    pi = grouped.Calc_pi(hi)
+    pi_cum = grouped.Calc_Pi(pi)
+
+    mean = grouped.Calc_Aithmetic_Average(midpoints , fi , n)
+    median = grouped.Calc_Median(intervals , fi , n , amplitud , fi)
+    mode = grouped.Calc_Mode(intervals, amplitud , fi)
 
     # Retornar todos los resultados en un diccionario
     return {
@@ -57,8 +59,10 @@ def Get_Results_For_Grouped_Data(data):
                 'vmax': vmax,
                 'rango': rango,
                 'n': n,
-                'm': m_redondeado,
+                'm': m,
+                'm_redondeado': m_redondeado,
                 'amplitud': amplitud,
+                'amplitud_redondeada': amplitud_redondeada,
             },
             "Frecuences_Results":{
                 'intervalos': intervals,

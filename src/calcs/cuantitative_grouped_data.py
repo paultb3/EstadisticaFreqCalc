@@ -4,27 +4,25 @@ import os
 import math
 
 from decimal import Decimal
-# =================== FUNCIONES ===================
 
-def find_min(data):
+# ========================================================= Calculo de Frecuencias =========================================================
+
+def Find_Min(data):
     return np.min(data)
 
-def find_max(data):
+def Find_Max(data):
     return np.max(data)
 
-def find_range(data):
+def Calc_Range(data):
     return np.max(data) - np.min(data)
 
-def log_n(n):
-    return math.log10(n)
+def Calc_Intervals_Number(n):
+    return 1 + (3.322*np.log10(n))
 
-def calculate_m(n):
-    return 1 + (3.322 * log_n(n))
-
-def round_m(m, ):
+def Calc_Rounded_Intervals_Number(m):
     return round(m)
 
-def calculate_amplitude(rango, m_redondeado , max_n_decimals_in_data):
+def Calc_Amplitude(rango, m_redondeado , max_n_decimals_in_data):
     """
         ==============================================================================================
         Esta funcion se encarga de redondear la amplitud, recibe un valor y le añade una decima de mas 
@@ -71,7 +69,7 @@ def calculate_amplitude(rango, m_redondeado , max_n_decimals_in_data):
     else:
         return Number + 0.1
 
-def calc_intervals(vmin, amplitud, m , N_Decimals_C):
+def Calc_Intervals(vmin, amplitud, m , N_Decimals_C):
     intervals = []
     lower = vmin
     for _ in range(m):
@@ -81,51 +79,118 @@ def calc_intervals(vmin, amplitud, m , N_Decimals_C):
         lower = upper
     return intervals
 
-def calc_fi(data, intervals):
+def Calc_xi(intervals):
+    return [(l + u) / 2 for l, u in intervals]
+
+def Calc_fi(data, intervals):
     fi = []
     for lower, upper in intervals:
         count = sum(1 for x in data if lower <= x < upper)
         fi.append(count)
     return fi
 
-def calc_fi_cumulative(fi):
+def Calc_Fi(fi):
     return np.cumsum(fi)
 
-def calc_hi(fi, n):
+def Calc_hi(fi, n):
     return [f / n for f in fi]
 
-def calc_hi_cumulative(hi):
+def Calc_Hi(hi):
     return np.cumsum(hi)
 
-def calc_pi_percent(hi):
+def Calc_pi(hi):
     return [h * 100 for h in hi]
 
-def calc_pi_cumulative(pi):
+def Calc_Pi(pi):
     return np.cumsum(pi)
 
-def calc_midpoints(intervals):
-    return [(l + u) / 2 for l, u in intervals]
+# ========================================================= Medidas de Tendencia Central =========================================================
+def Calc_Aithmetic_Average(Arr_xi, Arr_fi, n):
+    return sum([fi * xi for fi , xi in zip(Arr_fi, Arr_xi)]) / n
 
-def calc_mean(midpoints, fi, n):
-    return sum([f * x for f, x in zip(fi, midpoints)]) / n
+def Calc_Median(Arr_Intervals , Arr_Fi , n , C , Arr_fi):
+    Aprox_Position_Median_Class = n/2
+    Position_Median_Class = 0
 
-def calc_median(intervals, fi, n, amplitud):
-    Fi = calc_fi_cumulative(fi)
-    median_class_idx = next(i for i, F in enumerate(Fi) if F >= n / 2)
-    L = intervals[median_class_idx][0]
-    F_prev = Fi[median_class_idx - 1] if median_class_idx > 0 else 0
-    f = fi[median_class_idx]
-    return L + ((n / 2 - F_prev) / f) * amplitud
+    for i in range(0 , len(Arr_Fi)):
+        F_i_before , Fi = 0 , 0  # F(i-1) y Fi
+        if(i == 0):
+            F_i_before = 0
+        else:
+            F_i_before = Arr_Fi[i - 1]
+        
+            Fi = Arr_Fi[i]
 
-def calc_mode(intervals, fi, amplitud):
-    modal_idx = np.argmax(fi)
-    L = intervals[modal_idx][0]
-    f1 = fi[modal_idx]
-    f0 = fi[modal_idx - 1] if modal_idx > 0 else 0
-    f2 = fi[modal_idx + 1] if modal_idx + 1 < len(fi) else 0
-    if (2*f1 - f0 - f2) == 0:
-        return L
-    return L + ((f1 - f0) / (2*f1 - f0 - f2)) * amplitud
+        if(F_i_before <= Aprox_Position_Median_Class < Fi):
+            Position_Median_Class = i
 
-if(__name__ == "__main__"):
-    print(calculate_amplitude(1363 , 7 , 2))
+    return Arr_Intervals[Position_Median_Class][0] + (((n/2) - Arr_Fi[i - 1])/(Arr_fi[i])*C)
+
+def Calc_Mode(Arr_Intervals , C , Arr_fi):
+    Arr_Mo = []
+    
+    Max_fi = np.max(Arr_fi)
+
+    Idx_Max_fi = [i for i , fi in enumerate(Arr_fi) if fi == Max_fi]
+
+    for idx in Idx_Max_fi:
+        f_mo = Arr_fi[idx]
+        if(idx == 1):
+            fi_before = 0
+        else:
+            fi_before = Arr_fi[idx - 1]
+
+        if(idx == len(Arr_fi) - 1):
+            fi_after = 0
+        else:
+            fi_after = Arr_fi[idx + 1]
+
+        d1 = f_mo - fi_before
+        d2 = f_mo - fi_after
+
+        Arr_Mo.append(Arr_Intervals[idx][0] + (d1/(d1 + d2))*C)
+
+    return Arr_Mo
+
+# ========================================================= Medidas de Posicion =========================================================
+def Calc_Quantile(Arr_Intervals , Arr_Fi , n , C , Arr_fi , Type_Quantile):
+    match(Type_Quantile):
+        case "Cuartil":
+            i = 4
+        case "Decil":
+            i = 10
+        case "Percentil":
+            i = 100
+
+    Arr_Cuantile = []
+
+    for k in range(1 , i+1):
+        Aprox_Position_Cuantile_Class = (k*n)/i
+        Position_Cuantile_Class = 0
+
+        for idx in range(0 , len(Arr_Fi)):
+            F_i_before , Fi = 0 , 0  # F(i-1) y Fi
+            if(i == 0):
+                F_i_before = 0
+            else:
+                F_i_before = Arr_Fi[idx - 1]
+            
+                Fi = Arr_Fi[idx]
+
+            if(F_i_before <= Aprox_Position_Cuantile_Class < Fi):
+                Position_Cuantile_Class = i
+                break
+
+        Arr_Cuantile.append(Arr_Intervals[Position_Cuantile_Class][0] + ((((k*n) / i) - Arr_Fi[Position_Cuantile_Class - 1]) / Arr_fi[Position_Cuantile_Class]))
+
+    return Arr_Cuantile
+
+# ========================================================= Medidas de Dispercion =========================================================
+def Calc_Variance(Arr_xi , Arr_fi , Arithmetic_Average , n):
+    return np.sum(((xi - Arithmetic_Average)**2)*fi for xi , fi in zip(Arr_xi , Arr_fi)) / (n - 1)
+
+def Calc_Standart_Variation(S_2):
+    return np.sqrt(S_2)
+
+def Calc_Coefficient_Variation(S , Arithmetic_Average):
+    return (S / Arithmetic_Average) * 100

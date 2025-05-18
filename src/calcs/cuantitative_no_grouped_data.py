@@ -3,7 +3,7 @@ import numpy as np
 
 import statistics
 
-# =================== Calculo de Frecuencias ===================
+# ========================================================= Calculo de Frecuencias =========================================================
 def Calc_fi_and_xi(data):
     Arr_xi = list(set(data))
     Arr_xi.sort()
