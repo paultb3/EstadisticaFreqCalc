@@ -94,6 +94,8 @@ class mainWindow:
         self.type_variable.set("Seleccionar tipo de variable")
         self.type_variable.place(x=110, y=330)
 
+
+
     def run(self):
         self.root.mainloop()
         
