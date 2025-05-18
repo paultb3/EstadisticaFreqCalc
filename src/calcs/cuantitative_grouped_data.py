@@ -1,7 +1,4 @@
-import pandas as pd
 import numpy as np
-import os
-import math
 
 from decimal import Decimal
 
@@ -71,11 +68,11 @@ def Calc_Amplitude(rango, m_redondeado , max_n_decimals_in_data):
 
 def Calc_Intervals(vmin, amplitud, m , N_Decimals_C):
     intervals = []
-    lower = vmin
+    lower = round(vmin , N_Decimals_C)
     for _ in range(m):
         upper = lower + amplitud
         upper = round(upper , N_Decimals_C)
-        intervals.append([lower, upper])
+        intervals.append([lower , upper])
         lower = upper
     return intervals
 
@@ -164,13 +161,13 @@ def Calc_Quantile(Arr_Intervals , Arr_Fi , n , C , Arr_fi , Type_Quantile):
 
     Arr_Cuantile = []
 
-    for k in range(1 , i+1):
+    for k in range(1 , i):
         Aprox_Position_Cuantile_Class = (k*n)/i
         Position_Cuantile_Class = 0
 
         for idx in range(0 , len(Arr_Fi)):
             F_i_before , Fi = 0 , 0  # F(i-1) y Fi
-            if(i == 0):
+            if(idx == 0):
                 F_i_before = 0
             else:
                 F_i_before = Arr_Fi[idx - 1]
@@ -178,7 +175,7 @@ def Calc_Quantile(Arr_Intervals , Arr_Fi , n , C , Arr_fi , Type_Quantile):
                 Fi = Arr_Fi[idx]
 
             if(F_i_before <= Aprox_Position_Cuantile_Class < Fi):
-                Position_Cuantile_Class = i
+                Position_Cuantile_Class = idx
                 break
 
         Arr_Cuantile.append(Arr_Intervals[Position_Cuantile_Class][0] + ((((k*n) / i) - Arr_Fi[Position_Cuantile_Class - 1]) / Arr_fi[Position_Cuantile_Class]))
