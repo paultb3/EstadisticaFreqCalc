@@ -38,10 +38,10 @@ def Calc_Median(data):
 def Calc_Mode_Mo(Arr_xi , Arr_fi):
     Max_Rep = max(Arr_fi)
     Mo = [Arr_xi[a] for a in range(0 , len(Arr_fi)) if Arr_fi[a] == Max_Rep]
-    if(len(Mo) == len(Arr_xi)):
-        return "Amodal"
-
-    return Mo
+    if(len(Mo) == len(Arr_xi) or len(Mo) == 0):
+        return ["Amodal"]
+    else:
+        return Mo
 
 # ========================================================= Medidas de Posicion =========================================================
 def Calc_Quartil(data):

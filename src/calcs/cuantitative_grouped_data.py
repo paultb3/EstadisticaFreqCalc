@@ -146,8 +146,10 @@ def Calc_Mode(Arr_Intervals , C , Arr_fi):
         d2 = f_mo - fi_after
 
         Arr_Mo.append(Arr_Intervals[idx][0] + (d1/(d1 + d2))*C)
-
-    return Arr_Mo
+    if(len(Arr_Mo) == len(Arr_fi) or len(Arr_Mo) == 0):
+        return ["Amodal"]
+    else:
+        return Arr_Mo
 
 # ========================================================= Medidas de Posicion =========================================================
 def Calc_Quantile(Arr_Intervals , Arr_Fi , n , C , Arr_fi , Type_Quantile):
