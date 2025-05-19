@@ -44,13 +44,18 @@ def Calc_Mode_Mo(Arr_xi , Arr_fi):
         return Mo
 
 # ========================================================= Medidas de Posicion =========================================================
-def Calc_Quartil(data):
-    pass
-def Calc_Decile(data):
-    pass
-def Calc_Percentile(data):
-    pass
 
+def Calc_Quartil(data):
+    data_sorted = sorted(data)
+    return np.percentile(data_sorted, [25, 50, 75])
+
+def Calc_Decile(data):
+    data_sorted = sorted(data)
+    return [np.percentile(data_sorted, i * 10) for i in range(1, 10)]
+
+def Calc_Percentile(data):
+    data_sorted = sorted(data)
+    return [np.percentile(data_sorted, i) for i in range(1, 100)]
 # ========================================================= Medidas de Dispercion =========================================================
 
 def Calc_Variance(data , Arithmetic_Average):
