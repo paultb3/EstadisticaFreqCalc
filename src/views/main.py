@@ -94,7 +94,7 @@ class mainWindow:
 
             
     def mostrar_preview_archivo(self, ruta):
-        # Eliminar previsualización anterior si existe
+        # Eliminar previsualización anterior si existe oñoo
         if hasattr(self, 'frame_preview') and self.frame_preview:
             self.frame_preview.destroy()
 
