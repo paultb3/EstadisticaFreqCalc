@@ -104,7 +104,7 @@ class mainWindow:
         try:
             icono_preview = Image.open("assets/icono-excel-previsualizacion.png").resize((20, 20), Image.LANCZOS)
         except:
-            icono_preview = Image.new("RGB", (20, 20), "gray")  # En caso de error, icono gris
+            icono_preview = Image.new("RGB", (20, 20), "gray")  # En caso de error, icono gris saa
 
         self.icono_preview = ImageTk.PhotoImage(icono_preview)
 
