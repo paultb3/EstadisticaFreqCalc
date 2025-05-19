@@ -15,20 +15,37 @@ class VentanaProcesamiento:
         self.root.title("Procesamiento de Datos")
         self.root.iconbitmap("assets/icono.ico")
         self.root.configure(bg="#F5ECD5", highlightthickness=0, bd=0)
+        
+        self.root.state("zoomed")  # Pantalla completa
 
-        width, height = 1920, 1080
-        x = (self.root.winfo_screenwidth() - width) // 2
-        y = (self.root.winfo_screenheight() - height) // 2
-        self.root.geometry(f"{width}x{height}+{x}+{y}")
+        # Canvas con scrollbar general para toda la ventana
+        self.canvas = tk.Canvas(self.root, bg="#F5ECD5", highlightthickness=0)
+        self.scroll_y = tk.Scrollbar(self.root, orient="vertical", command=self.canvas.yview)
+        self.scroll_y.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.configure(yscrollcommand=self.scroll_y.set)
 
-        self.contenedor = tk.Frame(self.root, bg="#F5ECD5", highlightthickness=0, bd=0)
-        self.contenedor.pack(padx=20, pady=20, fill="both", expand=True)
+        # Frame contenedor dentro del canvas
+        self.contenedor = tk.Frame(self.canvas, bg="#F5ECD5")
+        self.canvas.create_window((0, 0), window=self.contenedor, anchor="nw")
+
+        # Actualiza scrollregion cuando cambia el tamaño del contenido
+        self.contenedor.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        # Ajustar ancho del frame al ancho del canvas para que el scroll quede pegado
+        def on_canvas_configure(event):
+            self.contenedor.configure(width=event.width)
+        self.canvas.bind("<Configure>", on_canvas_configure)
 
         self.mostrar_tabla_frecuencia()
-        self.mostrar_resultados_estadisticos()
         self.regresar()
         self.root.mainloop()
-
+        
+    def estilos_personalizados(self):
+        style = ttkb.Style()
+        style.configure("Custom.TLabel", foreground="#222831", background="#F5ECD5", font=("Franklin Gothic Demi", 13))
+        style.configure("Custom.TButton", foreground="#F5ECD5", background="#626F47", font=("Franklin Gothic Demi", 13))
+        style.configure("Custom.TEntry", fieldbackground="#FFFFFF", foreground="#222831", font=("Aptos", 12))
 
     def mostrar_tabla_frecuencia(self):
         if self.data["tipo"] == "Discreta":
@@ -51,27 +68,39 @@ class VentanaProcesamiento:
                 "Pi Acum.": self.data["Pi"]
             })
         else:
-            df_frecuencia = pd.DataFrame()  # fallback
+            df_frecuencia = pd.DataFrame()
 
-        # Tabla en Treeview
         if not df_frecuencia.empty:
             columnas = list(df_frecuencia.columns)
-            filas_totales = len(df_frecuencia)
 
             titulo = tk.Label(self.contenedor, text=f"Tabla {self.tabla_contador:02d}: Frecuencia",
                               font=("Segoe UI", 12, "bold"), bg="#F5ECD5")
-            titulo.pack(pady=(10, 5))
+            titulo.pack(pady=(10, 5))  # reducido padding inferior
 
             style = ttk.Style()
             style.theme_use("clam")
             style.configure("Custom.Treeview", background="#FFFFFF", foreground="black", rowheight=25)
             style.configure("Custom.Treeview.Heading", background="#5D6D7E", foreground="white")
 
-            tabla_frame = tk.Frame(self.contenedor, bg="#F5ECD5", highlightthickness=0)
-            tabla_frame.pack(pady=(0, 5), fill="both", expand=True)
+            tabla_frame = tk.Frame(self.contenedor, bg="#F5ECD5")
+            tabla_frame.pack(fill="x")
 
-            tabla = ttk.Treeview(tabla_frame, columns=columnas, show="headings", height=filas_totales,
+            scroll_y = tk.Scrollbar(tabla_frame, orient="vertical")
+            scroll_y.pack(side="right", fill="y")
+
+            scroll_x = tk.Scrollbar(tabla_frame, orient="horizontal")
+            scroll_x.pack(side="bottom", fill="x")
+
+            tabla = ttk.Treeview(tabla_frame,
+                                 columns=columnas,
+                                 show="headings",
+                                 yscrollcommand=scroll_y.set,
+                                 xscrollcommand=scroll_x.set,
+                                 height=8,
                                  style="Custom.Treeview")
+
+            scroll_y.config(command=tabla.yview)
+            scroll_x.config(command=tabla.xview)
 
             for col in columnas:
                 tabla.heading(col, text=col)
@@ -83,64 +112,74 @@ class VentanaProcesamiento:
 
             tabla.pack(fill="both", expand=True)
 
+            # Mostrar gráfico inmediatamente después sin espacio extra
             self.mostrar_grafico(df_frecuencia)
 
     def mostrar_grafico(self, df_frecuencia):
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(10, 5))
+
         ax.bar(df_frecuencia["Clase"], df_frecuencia["Frecuencia"], color="#5D6D7E")
         ax.set_title(f"Gráfico {self.grafico_contador:02d}: Distribución de Frecuencias", fontsize=14, fontweight="bold")
         ax.set_xlabel("Clases", fontsize=12)
         ax.set_ylabel("Frecuencia", fontsize=12)
 
-    # Etiquetas en las barras (Pi%)
         for i, v in enumerate(df_frecuencia["Frecuencia"]):
             ax.text(i, v + 0.5, f'{df_frecuencia["Pi%"].iloc[i]:.2f}%', ha='center', fontsize=10)
 
         plt.tight_layout()
 
         grafico_frame = tk.Frame(self.contenedor, bg="#F5ECD5")
-        grafico_frame.pack(pady=(10, 0), fill="both", expand=True)
+        grafico_frame.pack(fill="x", expand=True, padx=20, pady=10)  # Agrega margen horizontal y separador vertical
 
         canvas = FigureCanvasTkAgg(fig, master=grafico_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(fill="both", expand=True)  # Esta línea es clave para evitar el espacio en blanco
 
-        VentanaProcesamiento.grafico_contador += 1
-
+        # Llamar a la función de la tabla de resultados estadísticos después de mostrar el gráfico
+        self.mostrar_resultados_estadisticos()
 
     def mostrar_resultados_estadisticos(self):
-        marco_resultados = tk.Frame(self.contenedor, bg="#F5ECD5")
-        marco_resultados.pack(pady=15, fill="x")
+        # Título de la tabla primero, antes de la tabla
+        titulo = tk.Label(self.contenedor, text=f"Tabla {self.tabla_contador + 1:02d}: Medidas Estadísticas",
+                        font=("Segoe UI", 12, "bold"), bg="#F5ECD5")
+        titulo.pack(pady=(20, 5))  # Asegúrate de que el título sea el primero en el pack
 
-        titulo = tk.Label(marco_resultados, text="Medidas Estadísticas",
-                          font=("Segoe UI", 12, "bold"), bg="#F5ECD5")
-        titulo.pack(anchor="w")
+        # Frame para la tabla
+        frame_tabla = tk.Frame(self.contenedor, bg="#F5ECD5")
+        frame_tabla.pack(pady=5)
 
-        texto = ""
-        texto += f"Media: {self.data['media']:.2f}\n"
-        texto += f"Mediana: {self.data['mediana']:.2f}\n"
-        if isinstance(self.data['moda'], list):
-            texto += f"Moda: {', '.join(map(str, self.data['moda']))}\n"
-        else:
-            texto += f"Moda: {self.data['moda']}\n"
-        texto += f"Varianza: {self.data['varianza']:.2f}\n"
-        texto += f"Desviación Estándar: {self.data['desviacion']:.2f}\n"
-        texto += f"Coef. de Variación: {self.data['coef_variacion']:.2f}%"
+        # Estilo ya definido previamente en mostrar_tabla_frecuencia()
+        tabla = ttk.Treeview(frame_tabla, columns=("Medida", "Valor"), show="headings", height=8, style="Custom.Treeview")
 
-        label = tk.Label(marco_resultados, text=texto, justify="left",
-                         font=("Segoe UI", 10), bg="#F5ECD5")
-        label.pack(anchor="w")
+        tabla.heading("Medida", text="Medida")
+        tabla.heading("Valor", text="Valor")
+        tabla.column("Medida", anchor="center", width=180)
+        tabla.column("Valor", anchor="center", width=140)
 
-    
+        # Preparar datos
+        medidas = [
+            ("Media", f"{self.data['media']:.2f}"),
+            ("Mediana", f"{self.data['mediana']:.2f}"),
+            ("Moda", ", ".join(map(str, self.data['moda'])) if isinstance(self.data['moda'], list) else str(self.data['moda'])),
+            ("Varianza", f"{self.data['varianza']:.2f}"),
+            ("Desviación Estándar", f"{self.data['desviacion']:.2f}"),
+            ("Coef. de Variación", f"{self.data['coef_variacion']:.2f}%")
+        ]
+
+        for i, (medida, valor) in enumerate(medidas):
+            tag = "evenrow" if i % 2 == 0 else "oddrow"
+            tabla.insert("", tk.END, values=(medida, valor), tags=(tag,))
+
+        # Empaquetar la tabla de manera controlada para que esté debajo del gráfico
+        tabla.pack(pady=(20, 10))  # Espaciado adicional si lo deseas entre el gráfico y la tabla
+
     def regresar(self):
-        from views.main import mainWindow  # ✅ se importa solo cuando se llama
-        self.root.destroy()
+        btn_regresar = ttkb.Button(self.contenedor, text="🔄 Volver a calcular", style="Custom.TButton", command=self.ir_a_main)
+        btn_regresar.place(x=1180, y=900)
+
+
+    def ir_a_main(self):
+        from views.main import mainWindow
+        self.root.withdraw()
         app = mainWindow()
-        app.root.mainloop()
-
-    def regresar(self):
-        btn_regresar = ttkb.Button(self.contenedor, text="🔄 Volver a calcular", style="success.TButton", command=self.regresar)
-        btn_regresar.pack(pady=10)
-        btn_regresar.place(x=500, y=850)
-
-

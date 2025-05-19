@@ -89,6 +89,41 @@ class mainWindow:
         if ruta:
             self.excel_path.set(ruta)
             self.actualizar_columnas()
+            self.mostrar_preview_archivo(ruta)  # <- Aquí está la llamada clave
+
+
+            
+    def mostrar_preview_archivo(self, ruta):
+        # Eliminar previsualización anterior si existe
+        if hasattr(self, 'frame_preview') and self.frame_preview:
+            self.frame_preview.destroy()
+
+        self.frame_preview = tk.Frame(self.root, bg="#F5ECD5", bd=1, relief="solid")
+        self.frame_preview.place(x=300, y=70)
+
+        try:
+            icono_preview = Image.open("assets/icono-excel-previsualizacion.png").resize((20, 20), Image.LANCZOS)
+        except:
+            icono_preview = Image.new("RGB", (20, 20), "gray")  # En caso de error, icono gris
+
+        self.icono_preview = ImageTk.PhotoImage(icono_preview)
+
+        tk.Label(self.frame_preview, image=self.icono_preview, bg="#F5ECD5").pack(side=tk.LEFT, padx=5, pady=5)
+
+        nombre = os.path.basename(ruta)
+        nombre_corto = nombre[:20] + "..." if len(nombre) > 23 else nombre
+        tk.Label(self.frame_preview, text=nombre_corto, bg="#F5ECD5",
+                font=("Aptos", 9), fg="#222831").pack(side=tk.LEFT, padx=2)
+
+        tk.Button(self.frame_preview, text="✕", bg="#F5ECD5", borderwidth=0, fg="gray",
+                command=self.eliminar_preview).pack(side=tk.RIGHT, padx=5)
+
+    def eliminar_preview(self):
+        self.excel_path.set("")
+        if hasattr(self, 'frame_preview') and self.frame_preview:
+            self.frame_preview.destroy()
+
+
 
     def actualizar_columnas(self):
         try:
