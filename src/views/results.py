@@ -29,7 +29,7 @@ class VentanaProcesamiento:
         self.contenedor = tk.Frame(self.canvas, bg="#F5ECD5")
         self.canvas.create_window((0, 0), window=self.contenedor, anchor="nw")
 
-        # Actualiza scrollregion cuando cambia el tamaño del contenido
+        # Actualiza scrollregion cuando cambia el tamaño del contenidosds
         self.contenedor.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
         # Ajustar ancho del frame al ancho del canvas para que el scroll quede pegado
