@@ -1,15 +1,16 @@
 import ttkbootstrap as ttkb
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk , IntVar
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+import numpy as np
 class VentanaProcesamiento:
     tabla_contador = 1
     grafico_contador = 1
 
-    def __init__(self, data):
+    def __init__(self, data , precision_from_main):
         self.data = data
         self.root = ttkb.Window(themename="flatly")
         self.root.title("Procesamiento de Datos")
@@ -29,6 +30,8 @@ class VentanaProcesamiento:
         self.contenedor = tk.Frame(self.canvas, bg="#F5ECD5")
         self.canvas.create_window((0, 0), window=self.contenedor, anchor="nw")
 
+        self.root.update_idletasks()
+
         # Actualiza scrollregion cuando cambia el tamaño del contenidosds
         self.contenedor.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
@@ -37,7 +40,12 @@ class VentanaProcesamiento:
             self.contenedor.configure(width=event.width)
         self.canvas.bind("<Configure>", on_canvas_configure)
 
-        self.mostrar_tabla_frecuencia()
+        self.tabla = None
+
+        self.mostrar_tabla_frecuencia(precision_from_main)
+
+        self.spinbox_precision.set(precision_from_main)
+        
         self.regresar()
         self.root.mainloop()
         
@@ -47,7 +55,37 @@ class VentanaProcesamiento:
         style.configure("Custom.TButton", foreground="#F5ECD5", background="#626F47", font=("Franklin Gothic Demi", 13))
         style.configure("Custom.TEntry", fieldbackground="#FFFFFF", foreground="#222831", font=("Aptos", 12))
 
-    def mostrar_tabla_frecuencia(self):
+    def update_table(self):
+        if(self.tabla):
+            for item in self.tabla.get_children():
+                self.tabla.delete(item)
+        if(not self.data):
+            raise Exception("No se encontraron los datos.")
+        for index in range(0 , len(self.data["fi"])):
+            tag = "evenrow" if index % 2 == 0 else "oddrow"
+            if(self.data["tipo"] == "Continua"):
+                clases = [f"[ {i[0]} - {i[1]} >" for i in self.data["intervalos"]]
+                self.tabla.insert("", tk.END, values=(
+                    clases[index],
+                    self.data["fi"][index],
+                    f'{self.data["hi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["Hi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["pi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["Pi"][index]:.{self.decimals_precision.get()}f}',
+                ), tags=(tag,))
+            elif(self.data["tipo"] == "Discreta"):
+                self.tabla.insert("", tk.END, values=(
+                    self.data["xi"][index],
+                    f'{self.data["fi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["hi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["Hi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["pi"][index]:.{self.decimals_precision.get()}f}',
+                    f'{self.data["Pi"][index]:.{self.decimals_precision.get()}f}',
+                ), tags=(tag,))
+        self.tabla.insert("" , tk.END , values=self.total_row)
+
+    def mostrar_tabla_frecuencia(self , precision):
+        clases = None
         if self.data["tipo"] == "Discreta":
             df_frecuencia = pd.DataFrame({
                 "Clase": self.data["xi"],
@@ -57,8 +95,9 @@ class VentanaProcesamiento:
                 "Pi%": self.data["pi"],
                 "Pi Acum.": self.data["Pi"]
             })
+            self.total_row = ("Total" , f'{np.sum(self.data["fi"]):.2f}' , f'{np.sum(self.data["hi"]):.2f}' , "" , f'{np.sum(self.data["pi"]):.2f}' , "")
         elif self.data["tipo"] == "Continua":
-            clases = [f"{i[0]} - {i[1]}" for i in self.data["intervalos"]]
+            clases = [f"[ {i[0]} - {i[1]} >" for i in self.data["intervalos"]]
             df_frecuencia = pd.DataFrame({
                 "Clase": clases,
                 "Frecuencia": self.data["fi"],
@@ -67,6 +106,7 @@ class VentanaProcesamiento:
                 "Pi%": self.data["pi"],
                 "Pi Acum.": self.data["Pi"]
             })
+            self.total_row = ("Total" , f'{np.sum(self.data["fi"]):.2f}' , f'{np.sum(self.data["hi"]):.2f}' , "" , f'{np.sum(self.data["pi"]):.2f}' , "")
         else:
             df_frecuencia = pd.DataFrame()
 
@@ -76,6 +116,11 @@ class VentanaProcesamiento:
             titulo = tk.Label(self.contenedor, text=f"Tabla {self.tabla_contador:02d}: Frecuencia",
                               font=("Segoe UI", 12, "bold"), bg="#F5ECD5")
             titulo.pack(pady=(10, 5))  # reducido padding inferior
+
+            self.decimals_precision = IntVar(self.root)
+            self.spinbox_precision = ttkb.Spinbox(self.contenedor, from_=0, to=10 , font=("Aptos", 10), width=10,
+                                                textvariable=self.decimals_precision, state="readonly" , command=self.update_table)
+            self.spinbox_precision.place(x=290, y=28)
 
             style = ttk.Style()
             style.theme_use("clam")
@@ -91,7 +136,8 @@ class VentanaProcesamiento:
             scroll_x = tk.Scrollbar(tabla_frame, orient="horizontal")
             scroll_x.pack(side="bottom", fill="x")
 
-            tabla = ttk.Treeview(tabla_frame,
+            
+            self.tabla = ttk.Treeview(tabla_frame,
                                  columns=columnas,
                                  show="headings",
                                  yscrollcommand=scroll_y.set,
@@ -99,27 +145,50 @@ class VentanaProcesamiento:
                                  height=8,
                                  style="Custom.Treeview")
 
-            scroll_y.config(command=tabla.yview)
-            scroll_x.config(command=tabla.xview)
+            scroll_y.config(command=self.tabla.yview)
+            scroll_x.config(command=self.tabla.xview)
 
+
+            self.tabla.config(height=12)
             for col in columnas:
-                tabla.heading(col, text=col)
-                tabla.column(col, anchor="center", width=130)
+                self.tabla.heading(col, text=col)
+                self.tabla.column(col, anchor="center", width=130)
 
-            for index, fila in df_frecuencia.iterrows():
+            for index in range(0 , len(self.data["fi"])):
                 tag = "evenrow" if index % 2 == 0 else "oddrow"
-                tabla.insert("", tk.END, values=tuple(fila), tags=(tag,))
+                if(self.data["tipo"] == "Continua"):
+                    self.tabla.insert("", tk.END, values=(
+                        clases[index],
+                        self.data["fi"][index],
+                        f'{self.data["hi"][index]:.{precision}f}',
+                        f'{self.data["Hi"][index]:.{precision}f}',
+                        f'{self.data["pi"][index]:.{precision}f}',
+                        f'{self.data["Pi"][index]:.{precision}f}',
+                    ), tags=(tag,))
+                elif(self.data["tipo"] == "Discreta"):
+                    self.tabla.insert("", tk.END, values=(
+                        self.data["xi"][index],
+                        f'{self.data["fi"][index]:.{precision}f}',
+                        f'{self.data["hi"][index]:.{precision}f}',
+                        f'{self.data["Hi"][index]:.{precision}f}',
+                        f'{self.data["pi"][index]:.{precision}f}',
+                        f'{self.data["Pi"][index]:.{precision}f}',
+                    ), tags=(tag,))
 
-            tabla.pack(fill="both", expand=True)
+            self.tabla.insert("" , tk.END , values=self.total_row)
+            self.tabla.pack(fill="both", expand=True)
 
             # Mostrar gráfico inmediatamente después sin espacio extra
-            self.mostrar_grafico(df_frecuencia)
+            self.mostrar_grafico(df_frecuencia , clases)
 
-    def mostrar_grafico(self, df_frecuencia):
+    def mostrar_grafico(self, df_frecuencia , clases):
         fig, ax = plt.subplots(figsize=(10, 5))
 
         ax.bar(df_frecuencia["Clase"], df_frecuencia["Frecuencia"], color="#5D6D7E")
-        ax.set_title(f"Gráfico {self.grafico_contador:02d}: Distribución de Frecuencias", fontsize=14, fontweight="bold")
+        ax.set_title(f"Gráfico {self.grafico_contador:02d}: Distribución de Frecuencias", fontsize=12, fontweight="bold")
+        ax.set_xticks(range(len(self.data["xi"])) if self.data["tipo"] == "Discreta" else range(len(clases)))
+        ax.set_xticklabels(self.data["xi"] if self.data["tipo"] == "Discreta" else clases , fontsize=9 , rotation=30 , rotation_mode="anchor" , ha="right")
+
         ax.set_xlabel("Clases", fontsize=12)
         ax.set_ylabel("Frecuencia", fontsize=12)
 

@@ -80,7 +80,7 @@ class mainWindow:
         self.type_variable.set("Seleccionar tipo de variable")
         self.type_variable.place(x=110, y=330)
 
-        spinbox_precision = ttkb.Spinbox(self.root, from_=0, to=5, font=("Aptos", 10), width=10,
+        spinbox_precision = ttkb.Spinbox(self.root, from_=1, to=10, font=("Aptos", 10), width=10,
                                          textvariable=self.decimals_precision, state="readonly")
         spinbox_precision.place(x=110, y=430)
 
@@ -159,7 +159,7 @@ class mainWindow:
             )
 
             self.root.destroy()
-            VentanaProcesamiento(Dictionary_Results)
+            VentanaProcesamiento(Dictionary_Results , self.decimals_precision.get())
 
         except (WarningException, FileNotFoundError) as e:
             messagebox.showwarning("Advertencia", str(e))

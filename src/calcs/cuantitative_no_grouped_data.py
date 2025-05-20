@@ -6,6 +6,7 @@ import statistics
 # ========================================================= Calculo de Frecuencias =========================================================
 def Calc_fi_and_xi(data):
     Arr_xi = list(set(data))
+    Arr_xi = [round(xi) for xi in Arr_xi]
     Arr_xi.sort()
 
     Arr_fi = []
