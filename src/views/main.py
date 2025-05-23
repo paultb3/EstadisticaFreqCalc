@@ -80,7 +80,7 @@ class mainWindow:
         self.type_variable.set("Seleccionar tipo de variable")
         self.type_variable.place(x=110, y=330)
 
-        spinbox_precision = ttkb.Spinbox(self.root, from_=0, to=5, font=("Aptos", 10), width=10,
+        spinbox_precision = ttkb.Spinbox(self.root, from_=1, to=10, font=("Aptos", 10), width=10,
                                          textvariable=self.decimals_precision, state="readonly")
         spinbox_precision.place(x=110, y=430)
 
@@ -94,7 +94,7 @@ class mainWindow:
 
             
     def mostrar_preview_archivo(self, ruta):
-        # Eliminar previsualización anterior si existe
+        # Eliminar previsualización anterior si existe oñoo
         if hasattr(self, 'frame_preview') and self.frame_preview:
             self.frame_preview.destroy()
 
@@ -104,7 +104,7 @@ class mainWindow:
         try:
             icono_preview = Image.open("assets/icono-excel-previsualizacion.png").resize((20, 20), Image.LANCZOS)
         except:
-            icono_preview = Image.new("RGB", (20, 20), "gray")  # En caso de error, icono gris
+            icono_preview = Image.new("RGB", (20, 20), "gray")  # En caso de error, icono gris saa
 
         self.icono_preview = ImageTk.PhotoImage(icono_preview)
 
@@ -159,7 +159,7 @@ class mainWindow:
             )
 
             self.root.destroy()
-            VentanaProcesamiento(Dictionary_Results)
+            VentanaProcesamiento(Dictionary_Results , self.decimals_precision.get())
 
         except (WarningException, FileNotFoundError) as e:
             messagebox.showwarning("Advertencia", str(e))

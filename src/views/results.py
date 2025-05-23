@@ -1,163 +1,203 @@
 import ttkbootstrap as ttkb
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, IntVar
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 
 class VentanaProcesamiento:
     tabla_contador = 1
     grafico_contador = 1
 
-    def __init__(self, data):
+    def __init__(self, data , precision_from_main):
         self.data = data
         self.root = ttkb.Window(themename="flatly")
         self.root.title("Procesamiento de Datos")
         self.root.iconbitmap("assets/icono.ico")
         self.root.configure(bg="#F5ECD5", highlightthickness=0, bd=0)
-        
-        self.root.state("zoomed")  # Pantalla completa
 
-        # Canvas con scrollbar general para toda la ventana
+        # Calcular el tamaño de la ventana
+        width = 2000
+        height = 900
+
+        # Obtener las dimensiones de la pantalla
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Calcular la posición para centrar la ventana
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+
+        # Establecer la geometría de la ventana centrada
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+        self.root.minsize(1100, 600)
+        # Canvas + scrollbar general
         self.canvas = tk.Canvas(self.root, bg="#F5ECD5", highlightthickness=0)
         self.scroll_y = tk.Scrollbar(self.root, orient="vertical", command=self.canvas.yview)
         self.scroll_y.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.configure(yscrollcommand=self.scroll_y.set)
 
-        # Frame contenedor dentro del canvas
         self.contenedor = tk.Frame(self.canvas, bg="#F5ECD5")
         self.canvas.create_window((0, 0), window=self.contenedor, anchor="nw")
 
-        # Actualiza scrollregion cuando cambia el tamaño del contenido
         self.contenedor.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.bind("<Configure>", lambda e: self.contenedor.configure(width=e.width))
 
-        # Ajustar ancho del frame al ancho del canvas para que el scroll quede pegado
-        def on_canvas_configure(event):
-            self.contenedor.configure(width=event.width)
-        self.canvas.bind("<Configure>", on_canvas_configure)
+        self.decimals_precision = IntVar(self.root)
+        self.decimals_precision.set(precision_from_main)
 
-        self.mostrar_tabla_frecuencia()
-        self.regresar()
-        self.root.mainloop()
-        
-    def estilos_personalizados(self):
-        style = ttkb.Style()
-        style.configure("Custom.TLabel", foreground="#222831", background="#F5ECD5", font=("Franklin Gothic Demi", 13))
-        style.configure("Custom.TButton", foreground="#F5ECD5", background="#626F47", font=("Franklin Gothic Demi", 13))
-        style.configure("Custom.TEntry", fieldbackground="#FFFFFF", foreground="#222831", font=("Aptos", 12))
+        # Layout grid
+        self.contenedor.grid_columnconfigure(0, weight=3, uniform="group1")
+        self.contenedor.grid_columnconfigure(1, weight=2, uniform="group1")
+        self.contenedor.grid_rowconfigure(0, weight=1)
 
-    def mostrar_tabla_frecuencia(self):
-        if self.data["tipo"] == "Discreta":
-            df_frecuencia = pd.DataFrame({
-                "Clase": self.data["xi"],
-                "Frecuencia": self.data["fi"],
-                "Frec. Relativa": self.data["hi"],
-                "Frec. Rel. Acum.": self.data["Hi"],
-                "Pi%": self.data["pi"],
-                "Pi Acum.": self.data["Pi"]
-            })
-        elif self.data["tipo"] == "Continua":
-            clases = [f"{i[0]} - {i[1]}" for i in self.data["intervalos"]]
-            df_frecuencia = pd.DataFrame({
-                "Clase": clases,
-                "Frecuencia": self.data["fi"],
-                "Frec. Relativa": self.data["hi"],
-                "Frec. Rel. Acum.": self.data["Hi"],
-                "Pi%": self.data["pi"],
-                "Pi Acum.": self.data["Pi"]
-            })
-        else:
-            df_frecuencia = pd.DataFrame()
+        # Frames izquierdo y derecho
+        self.frame_izquierdo = ttkb.Frame(self.contenedor, bootstyle="light", padding=10)
+        self.frame_izquierdo.grid(row=0, column=0, sticky="nsew", padx=(20, 10), pady=20)
 
-        if not df_frecuencia.empty:
-            columnas = list(df_frecuencia.columns)
+        self.frame_derecho = ttkb.Frame(self.contenedor, bootstyle="light", padding=10)
+        self.frame_derecho.grid(row=0, column=1, sticky="nsew", padx=(10, 20), pady=20)
 
-            titulo = tk.Label(self.contenedor, text=f"Tabla {self.tabla_contador:02d}: Frecuencia",
-                              font=("Segoe UI", 12, "bold"), bg="#F5ECD5")
-            titulo.pack(pady=(10, 5))  # reducido padding inferior
+        # Control precisión y tabla frecuencia
+        precision_label = ttkb.Label(self.frame_izquierdo, text="Precisión decimales:", font=("Segoe UI", 11))
+        precision_label.pack(anchor="nw")
+        self.spinbox_precision = ttkb.Spinbox(self.frame_izquierdo, from_=0, to=10, width=6,
+                                              textvariable=self.decimals_precision, state="readonly",
+                                              command=self.update_table)
+        self.spinbox_precision.pack(anchor="nw", pady=(0, 10))
 
-            style = ttk.Style()
-            style.theme_use("clam")
-            style.configure("Custom.Treeview", background="#FFFFFF", foreground="black", rowheight=25)
-            style.configure("Custom.Treeview.Heading", background="#5D6D7E", foreground="white")
+        tabla_title = ttkb.Label(self.frame_izquierdo, text=f"Tabla {self.tabla_contador:02d}: Frecuencia",
+                                 font=("Segoe UI", 13, "bold"))
+        tabla_title.pack(anchor="nw")
 
-            tabla_frame = tk.Frame(self.contenedor, bg="#F5ECD5")
-            tabla_frame.pack(fill="x")
+        self.mostrar_tabla_frecuencia(self.decimals_precision.get())
 
-            scroll_y = tk.Scrollbar(tabla_frame, orient="vertical")
-            scroll_y.pack(side="right", fill="y")
+        # Gráfico: crea frame y figura solo UNA VEZ
+        self.grafico_frame = tk.Frame(self.frame_izquierdo, bg="#F5ECD5")
+        self.grafico_frame.pack(fill="x", pady=10)
 
-            scroll_x = tk.Scrollbar(tabla_frame, orient="horizontal")
-            scroll_x.pack(side="bottom", fill="x")
+        self.fig, self.ax = plt.subplots(figsize=(10, 4))
+        self.canvas_fig = FigureCanvasTkAgg(self.fig, master=self.grafico_frame)
+        self.canvas_fig.get_tk_widget().pack(fill="both", expand=True)
 
-            tabla = ttk.Treeview(tabla_frame,
-                                 columns=columnas,
-                                 show="headings",
-                                 yscrollcommand=scroll_y.set,
-                                 xscrollcommand=scroll_x.set,
-                                 height=8,
-                                 style="Custom.Treeview")
+        self._dibujar_grafico(self.decimals_precision.get())
 
-            scroll_y.config(command=tabla.yview)
-            scroll_x.config(command=tabla.xview)
+        # Tabla medidas estadísticas
+        medidas_title = ttkb.Label(self.frame_derecho, text=f"Tabla {self.tabla_contador + 1:02d}: Medidas Estadísticas",
+                                  font=("Segoe UI", 13, "bold"))
+        medidas_title.pack(anchor="nw", pady=(0, 10))
 
-            for col in columnas:
-                tabla.heading(col, text=col)
-                tabla.column(col, anchor="center", width=130)
-
-            for index, fila in df_frecuencia.iterrows():
-                tag = "evenrow" if index % 2 == 0 else "oddrow"
-                tabla.insert("", tk.END, values=tuple(fila), tags=(tag,))
-
-            tabla.pack(fill="both", expand=True)
-
-            # Mostrar gráfico inmediatamente después sin espacio extra
-            self.mostrar_grafico(df_frecuencia)
-
-    def mostrar_grafico(self, df_frecuencia):
-        fig, ax = plt.subplots(figsize=(10, 5))
-
-        ax.bar(df_frecuencia["Clase"], df_frecuencia["Frecuencia"], color="#5D6D7E")
-        ax.set_title(f"Gráfico {self.grafico_contador:02d}: Distribución de Frecuencias", fontsize=14, fontweight="bold")
-        ax.set_xlabel("Clases", fontsize=12)
-        ax.set_ylabel("Frecuencia", fontsize=12)
-
-        for i, v in enumerate(df_frecuencia["Frecuencia"]):
-            ax.text(i, v + 0.5, f'{df_frecuencia["Pi%"].iloc[i]:.2f}%', ha='center', fontsize=10)
-
-        plt.tight_layout()
-
-        grafico_frame = tk.Frame(self.contenedor, bg="#F5ECD5")
-        grafico_frame.pack(fill="x", expand=True, padx=20, pady=10)  # Agrega margen horizontal y separador vertical
-
-        canvas = FigureCanvasTkAgg(fig, master=grafico_frame)
-        canvas.draw()
-        canvas_widget = canvas.get_tk_widget()
-        canvas_widget.pack(fill="both", expand=True)  # Esta línea es clave para evitar el espacio en blanco
-
-        # Llamar a la función de la tabla de resultados estadísticos después de mostrar el gráfico
         self.mostrar_resultados_estadisticos()
 
+        # Botón volver abajo a la derecha
+        btn_regresar = ttkb.Button(self.root, text="🔄 Volver a calcular", style="success", command=self.ir_a_main)
+        btn_regresar.place(relx=0.95, rely=0.95, anchor="se")
+
+        self.root.mainloop()
+
+    def mostrar_tabla_frecuencia(self, precision):
+        if hasattr(self, "tabla"):
+            self.tabla.destroy()
+
+        clases = None
+        if self.data["tipo"] == "Discreta":
+            clases = self.data["xi"]
+        elif self.data["tipo"] == "Continua":
+            clases = [f"[ {i[0]} - {i[1]} >" for i in self.data["intervalos"]]
+
+        df_frecuencia = pd.DataFrame({
+            "Clase": clases,
+            "Frecuencia": self.data["fi"],
+            "Frec. Relativa": self.data["hi"],
+            "Frec. Rel. Acum.": self.data["Hi"],
+            "Pi%": self.data["pi"],
+            "Pi Acum.": self.data["Pi"]
+        })
+
+        self.total_row = ("Total", f'{np.sum(self.data["fi"]):.2f}', f'{np.sum(self.data["hi"]):.2f}', "", f'{np.sum(self.data["pi"]):.2f}', "")
+
+        columnas = list(df_frecuencia.columns)
+
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure("Custom.Treeview", background="#FFFFFF", foreground="black", rowheight=25)
+        style.configure("Custom.Treeview.Heading", background="#5D6D7E", foreground="white")
+
+        tabla_frame = tk.Frame(self.frame_izquierdo, bg="#F5ECD5")
+        tabla_frame.pack(fill="both", expand=True)
+
+        scroll_y = tk.Scrollbar(tabla_frame, orient="vertical")
+        scroll_y.pack(side="right", fill="y")
+
+        scroll_x = tk.Scrollbar(tabla_frame, orient="horizontal")
+        scroll_x.pack(side="bottom", fill="x")
+
+        self.tabla = ttk.Treeview(tabla_frame,
+                                  columns=columnas,
+                                  show="headings",
+                                  yscrollcommand=scroll_y.set,
+                                  xscrollcommand=scroll_x.set,
+                                  height=8,
+                                  style="Custom.Treeview")
+
+        scroll_y.config(command=self.tabla.yview)
+        scroll_x.config(command=self.tabla.xview)
+
+        for col in columnas:
+            self.tabla.heading(col, text=col)
+            self.tabla.column(col, anchor="center", width=130)
+
+        for index in range(len(self.data["fi"])):
+            tag = "evenrow" if index % 2 == 0 else "oddrow"
+            self.tabla.insert("", tk.END, values=(
+                clases[index],
+                self.data["fi"][index],
+                f'{self.data["hi"][index]:.{precision}f}',
+                f'{self.data["Hi"][index]:.{precision}f}',
+                f'{self.data["pi"][index]:.{precision}f}',
+                f'{self.data["Pi"][index]:.{precision}f}',
+            ), tags=(tag,))
+
+        self.tabla.insert("", tk.END, values=self.total_row)
+
+        self.tabla.pack(fill="both", expand=True)
+
+    def _dibujar_grafico(self, precision):
+        self.ax.clear()
+
+        clases = None
+        if self.data["tipo"] == "Discreta":
+            clases = self.data["xi"]
+        elif self.data["tipo"] == "Continua":
+            clases = [f"[ {i[0]} - {i[1]} >" for i in self.data["intervalos"]]
+
+        self.ax.bar(clases, self.data["fi"], color="#5D6D7E")
+        self.ax.set_title(f"Gráfico {self.grafico_contador:02d}: Distribución de Frecuencias", fontsize=12, fontweight="bold")
+        self.ax.set_xticks(range(len(clases)))
+        self.ax.set_xticklabels(clases, fontsize=9, rotation=30, rotation_mode="anchor", ha="right")
+
+        self.ax.set_xlabel("Clases", fontsize=12)
+        self.ax.set_ylabel("Frecuencia", fontsize=12)
+
+        for i, v in enumerate(self.data["fi"]):
+            self.ax.text(i, v + 0.5, f'{self.data["pi"][i]:.{precision}f}%', ha='center', fontsize=10)
+
+        self.fig.tight_layout()
+        self.canvas_fig.draw()
+
     def mostrar_resultados_estadisticos(self):
-        # Título de la tabla primero, antes de la tabla
-        titulo = tk.Label(self.contenedor, text=f"Tabla {self.tabla_contador + 1:02d}: Medidas Estadísticas",
-                        font=("Segoe UI", 12, "bold"), bg="#F5ECD5")
-        titulo.pack(pady=(20, 5))  # Asegúrate de que el título sea el primero en el pack
+        if hasattr(self, "tabla_estadistica"):
+            self.tabla_estadistica.destroy()
 
-        # Frame para la tabla
-        frame_tabla = tk.Frame(self.contenedor, bg="#F5ECD5")
-        frame_tabla.pack(pady=5)
+        self.tabla_estadistica = ttk.Treeview(self.frame_derecho, columns=("Medida", "Valor"), show="headings", height=15)
+        self.tabla_estadistica.heading("Medida", text="Medida")
+        self.tabla_estadistica.heading("Valor", text="Valor")
+        self.tabla_estadistica.column("Medida", anchor="center", width=180)
+        self.tabla_estadistica.column("Valor", anchor="center", width=140)
 
-        # Estilo ya definido previamente en mostrar_tabla_frecuencia()
-        tabla = ttk.Treeview(frame_tabla, columns=("Medida", "Valor"), show="headings", height=8, style="Custom.Treeview")
-
-        tabla.heading("Medida", text="Medida")
-        tabla.heading("Valor", text="Valor")
-        tabla.column("Medida", anchor="center", width=180)
-        tabla.column("Valor", anchor="center", width=140)
-
-        # Preparar datos
         medidas = [
             ("Media", f"{self.data['media']:.2f}"),
             ("Mediana", f"{self.data['mediana']:.2f}"),
@@ -169,17 +209,23 @@ class VentanaProcesamiento:
 
         for i, (medida, valor) in enumerate(medidas):
             tag = "evenrow" if i % 2 == 0 else "oddrow"
-            tabla.insert("", tk.END, values=(medida, valor), tags=(tag,))
+            self.tabla_estadistica.insert("", tk.END, values=(medida, valor), tags=(tag,))
 
-        # Empaquetar la tabla de manera controlada para que esté debajo del gráfico
-        tabla.pack(pady=(20, 10))  # Espaciado adicional si lo deseas entre el gráfico y la tabla
+        # Aquí está el cambio para mover la tabla más a la derecha: padx a la izquierda
+        self.tabla_estadistica.pack(fill="both", expand=True, padx=(0, 115))
+
+        self.tabla_estadistica.tag_configure("evenrow", background="#F5F5F5")
+        self.tabla_estadistica.tag_configure("oddrow", background="#FFFFFF")
+
+    def update_table(self):
+        self.mostrar_tabla_frecuencia(self.decimals_precision.get())
+        self._dibujar_grafico(self.decimals_precision.get())
 
     def regresar(self):
         btn_regresar = ttkb.Button(self.contenedor, text="🔄 Volver a calcular", style="Custom.TButton", command=self.ir_a_main)
         btn_regresar.place(x=1180, y=900)
 
-
     def ir_a_main(self):
         from views.main import mainWindow
-        self.root.withdraw()
+        self.root.destroy()
         app = mainWindow()
